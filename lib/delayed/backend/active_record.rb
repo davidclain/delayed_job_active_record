@@ -11,7 +11,25 @@ module Delayed
         attr_accessible :priority, :run_at, :queue, :payload_object,
           :failed_at, :locked_at, :locked_by
 
+        # Database connection
+        establish_connection(
+          :adapter => 'mysql',
+          :host => ENV['storm_database_host'] || 'localhost',
+          :port => ENV['storm_database_port'].to_i || 3306,
+          :database => ENV['storm_database_database'] || 'storm',
+          :username => ENV['storm_database_username'] || 'root',
+          :password => ENV['storm_database_password'] || ''
+        )
+
         before_save :set_default_run_at
+        before_create :set_account_subdomain
+
+
+        def set_account_subdomain
+          if Account.current
+            self.account_subdomain = Account.current.subdomain
+          end
+        end
 
         def self.rails3?
           ::ActiveRecord::VERSION::MAJOR == 3
